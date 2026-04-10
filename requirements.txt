@@ -1,0 +1,9 @@
+# Game runtime
+pygame>=2.4.0
+numpy>=1.24.0
+
+# Training only (not needed for running the game)
+torch>=2.0.0
+
+# WebAssembly compilation
+pygbag>=0.8.0

@@ -58,6 +58,12 @@ TARGET_SYNC      = 500           # steps between target network updates
 CHECKPOINT_EVERY = 5_000         # episodes
 MAX_STEPS        = 200           # max moves per game (prevent infinite loops)
 
+# Reward shaping
+# A small per-step reward for improving own piece proximity and alignment.
+# Kept small relative to the terminal +1/-1 so the agent still optimises
+# for winning rather than just clustering pieces indefinitely.
+SHAPE_SCALE      = 0.06   # max shaped reward per step ≈ 0.06 * 16 = 0.96 < 1.0
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CKPT_DIR = os.path.join(os.path.dirname(__file__), "checkpoints")
 os.makedirs(CKPT_DIR, exist_ok=True)
@@ -182,6 +188,55 @@ def load_checkpoint(path, policy_net, target_net, optimizer):
 
 
 # ------------------------------------------------------------------
+# Reward shaping helper
+# ------------------------------------------------------------------
+
+def _pairwise_dist(positions):
+    return sum(
+        abs(positions[i][0] - positions[j][0]) + abs(positions[i][1] - positions[j][1])
+        for i in range(3) for j in range(i + 1, 3)
+    )
+
+
+def _alignment(positions):
+    return sum(
+        1
+        for i in range(3) for j in range(i + 1, 3)
+        if (positions[i][0] == positions[j][0]
+            or positions[i][1] == positions[j][1]
+            or abs(positions[i][0] - positions[j][0])
+               == abs(positions[i][1] - positions[j][1]))
+    )
+
+
+def board_score(board, player):
+    """
+    Relative heuristic score for player (higher = better).
+
+    Three signals:
+      1. Proximity: own pieces closer together is better; opponent closer is worse
+      2. Alignment: own pairs sharing row/col/diagonal score higher; opponent's hurts
+      3. Threat penalty: -10 if the opponent can win on their very next move,
+         making threat-blocking the agent's top priority
+    """
+    opponent = 3 - player
+    own_pos  = board.pawn_positions(player)
+    opp_pos  = board.pawn_positions(opponent)
+
+    base = (
+        (-_pairwise_dist(own_pos) + 3 * _alignment(own_pos))
+        - (-_pairwise_dist(opp_pos) + 3 * _alignment(opp_pos))
+    )
+
+    threat = any(
+        board.apply_move(pid, d).check_winner() == opponent
+        for pid, d, _, _ in board.get_legal_moves(opponent)
+    )
+
+    return base - (10 if threat else 0)
+
+
+# ------------------------------------------------------------------
 # Main training loop
 # ------------------------------------------------------------------
 
@@ -237,7 +292,12 @@ def train(resume_path=None, extra_episodes=None):
             elif winner != 0:
                 reward = -1.0
             else:
-                reward = 0.0
+                # Shaped reward: improvement in own piece configuration
+                # relative to the previous board state.
+                reward = SHAPE_SCALE * (
+                    board_score(next_board, current_player)
+                    - board_score(board, current_player)
+                )
 
             next_state = next_board.encode(current_player)
 

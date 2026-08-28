@@ -158,6 +158,7 @@ async def main():
     difficulty_name = "Easy"
 
     clock = pygame.time.Clock()
+    pygame.event.clear()  # discard any events that queued during initialisation
 
     while True:
         mouse_pos = pygame.mouse.get_pos()
@@ -209,6 +210,7 @@ async def main():
         if phase == "ai_turn" and game is not None:
             if game.anim is None:  # wait for animation to finish
                 game.ai_move()
+                pygame.event.clear()  # discard clicks that landed during AI computation
                 if game.winner:
                     phase = "win"
                 else:

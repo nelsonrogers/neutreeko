@@ -1,8 +1,24 @@
 # Neutreeko
 
-A Python implementation of the [Neutreeko](https://en.wikipedia.org/wiki/Neutreeko) board game, built as a recruiter-facing portfolio project. The game runs as a native Pygame application and compiles to WebAssembly via [Pygbag](https://pygame-web.github.io/) for embedding in a static website.
+A Python implementation of the [Neutreeko](https://en.wikipedia.org/wiki/Neutreeko) board game. You play against an AI opponent: the hardest level is a **Deep Q-Network (DQN)** trained through self-play, and the easier levels use alpha-beta minimax search.
 
-The AI opponent is trained using a **Deep Q-Network (DQN)** via self-play. Lighter difficulty levels use alpha-beta minimax search.
+The game runs as a native Pygame application and can also be compiled to WebAssembly with [Pygbag](https://pygame-web.github.io/) so it can be played in a browser.
+
+---
+
+## Background
+
+This started as a school programming project during my *classes préparatoires* (CPGE), the two-year program that prepares students for the competitive entrance exams to French engineering schools. Building this game is what really taught me how to code.
+
+The original version is still in the repo as [NeutreekoV1.py](NeutreekoV1.py) (written in French, with matplotlib for graphics). Its AI was a set of rules I came up with myself:
+
+- **Level 1:** play the winning move if there is one, otherwise move at random.
+- **Level 2:** try random moves, recursively re-rolling (up to 400 times) until one doesn't let the player win on the next turn.
+- **Level 3:** same as level 2, but also prefer moves that put two of its pieces side by side.
+
+[NeutreekoV2.py](NeutreekoV2.py) is a later rewrite of the same game in English, using classes.
+
+Since then I've learned a lot more about programming and got interested in AI, especially deep learning. Coming back to this game felt like a good way to put that into practice: rebuild it with a cleaner structure, replace the hand-written rules with proper search, and see how strong an opponent I can get with reinforcement learning. It's an ongoing project that I use to sharpen my skills as an AI engineer.
 
 ---
 
@@ -59,8 +75,8 @@ neutreeko/
 │
 ├── main.py               # Async game loop — Pygbag/WebAssembly compatible
 ├── requirements.txt
-└── NeutreekoV1.py        # Original prototype (matplotlib, French) — kept for reference
-└── NeutreekoV2.py        # Second prototype (matplotlib, English OOP) — kept for reference
+├── NeutreekoV1.py        # Original CPGE version (matplotlib, French), kept for reference
+└── NeutreekoV2.py        # Later rewrite (matplotlib, English OOP), kept for reference
 ```
 
 ---

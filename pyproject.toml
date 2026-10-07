@@ -1,7 +1,7 @@
 [project]
 name = "neutreeko"
 version = "0.1.0"
-description = "Add your description here"
+description = "The Neutreeko board game with minimax and self-play DQN opponents"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
